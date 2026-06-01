@@ -10,5 +10,8 @@ COPY . .
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+COPY startup.sh /app/startup.sh
+RUN chmod +x /app/startup.sh
+
 EXPOSE 8000
-CMD ["gunicorn", "marcenaria.wsgi:application", "--bind", "0.0.0.0:$PORT"]
+CMD ["/app/startup.sh"]
