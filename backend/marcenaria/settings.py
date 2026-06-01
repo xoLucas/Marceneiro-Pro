@@ -52,7 +52,38 @@ TEMPLATES = [
 WSGI_APPLICATION = "marcenaria.wsgi.application"
 ASGI_APPLICATION = "marcenaria.asgi.application"
 
-if os.getenv("DJANGO_USE_SQLITE", "0") == "1":
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    from urllib.parse import urlparse
+
+    parsed = urlparse(DATABASE_URL)
+    if parsed.scheme in ("postgres", "postgresql"):
+        engine = "django.db.backends.postgresql"
+    elif parsed.scheme in ("sqlite", "sqlite3"):
+        engine = "django.db.backends.sqlite3"
+    else:
+        raise ValueError(f"Unsupported DATABASE_URL scheme: {parsed.scheme}")
+
+    if engine == "django.db.backends.sqlite3":
+        db_name = parsed.path[1:] if parsed.path.startswith("/") else parsed.path
+        DATABASES = {
+            "default": {
+                "ENGINE": engine,
+                "NAME": db_name or BASE_DIR / "db.sqlite3",
+            }
+        }
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE": engine,
+                "NAME": parsed.path[1:],
+                "USER": parsed.username or "postgres",
+                "PASSWORD": parsed.password or "postgres",
+                "HOST": parsed.hostname or "127.0.0.1",
+                "PORT": parsed.port or "5432",
+            }
+        }
+elif os.getenv("DJANGO_USE_SQLITE", "0") == "1":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
