@@ -9,9 +9,11 @@ COPY . .
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV DJANGO_USE_SQLITE=1
 
-COPY startup.sh /app/startup.sh
-RUN chmod +x /app/startup.sh
+# Rodar migrations e seed no build
+RUN python manage.py migrate
+RUN python manage.py seed_dados
 
 EXPOSE 8000
-CMD ["/app/startup.sh"]
+CMD ["gunicorn", "marcenaria.wsgi:application", "--bind", "0.0.0.0:$PORT"]
